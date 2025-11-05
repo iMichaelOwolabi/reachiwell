@@ -24,6 +24,9 @@ export class User {
   password: string;
 
   @Prop()
+  status: string;
+
+  @Prop()
   lastLoggedIn: string;
 }
 

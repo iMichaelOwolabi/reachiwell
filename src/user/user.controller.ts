@@ -5,9 +5,14 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post('signup')
+  @Post('auth/signup')
   async createUserAccount(@Body() userData) {
     return this.userService.createUserAccount(userData);
+  }
+
+  @Post('auth/login')
+  async login(@Body() userData) {
+    return this.userService.login(userData);
   }
 
   @Get()

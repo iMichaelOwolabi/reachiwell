@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { UserStatus } from './enum/user.enum';
-import { verifyPassword } from './utils/auth.utils';
+import { verifyPassword, generateToken } from './utils/auth.utils';
 
 @Injectable()
 export class UserService {
@@ -30,8 +34,10 @@ export class UserService {
       .findOne()
       .where({ email: userCredentials.email });
 
+      console.log(user, )
+
     if (!user || user.status !== UserStatus.active) {
-      throw new ConflictException('User with the same email already exists');
+      throw new ConflictException('Invalid email or password, please check and try again.');
     }
 
     const verifiedPassword = await verifyPassword(
@@ -50,8 +56,7 @@ export class UserService {
 
     // Return token to user
 
-    const createdUser = await this.userModel.create(body);
-    return createdUser;
+    return { token };
   }
 
   async getAllUser() {
@@ -60,11 +65,6 @@ export class UserService {
   }
 
   async generateAuthenticationToken(userId: string): Promise<string> {
-    const user: User = await this.userRepository.getUserById(userId);
-    const userRoles: UserRole[] = await this.userRoleRepo.getUserRole(userId);
-
-    const roles = extractRoles(userRoles);
-
-    return generateToken({ userId, roles, rnplUser: user.rnplUser }); // Generate a token using user ID and role
+    return generateToken({ userId }); // Generate a token using user ID and role
   }
 }

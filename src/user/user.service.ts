@@ -34,10 +34,12 @@ export class UserService {
       .findOne()
       .where({ email: userCredentials.email });
 
-      console.log(user, )
+    console.log(user);
 
     if (!user || user.status !== UserStatus.active) {
-      throw new ConflictException('Invalid email or password, please check and try again.');
+      throw new ConflictException(
+        'Invalid email or password, please check and try again.',
+      );
     }
 
     const verifiedPassword = await verifyPassword(
@@ -50,7 +52,7 @@ export class UserService {
     }
 
     //Generate login token
-    const token: string = await this.generateAuthenticationToken(user.id);
+    const token: string = generateToken({ userId: user.id });
 
     // Update user last logged in
 

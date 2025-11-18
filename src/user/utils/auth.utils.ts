@@ -8,7 +8,11 @@ import { config } from 'dotenv';
 
 config();
 
-const secret = process.env.SECRET;
+const secret = process.env.JWT_SECRET;
+
+if (!secret) {
+  throw new Error('JWT_SECRET must be set in environment variables');
+}
 
 export const hashPassword = async (password) => {
   const hashedPassword = await hash(password, 10);
@@ -24,7 +28,7 @@ export const verifyPassword = async (password: string, dbPassword: string) => {
 // Jwt section
 export const generateToken = (payload) => {
   return sign(payload, secret, {
-    expiresIn: parseInt(process.env.TOKEN_EXPIRATION_TIME || '6000', 10),
+    expiresIn: parseInt(process.env.TOKEN_EXPIRATION_TIME ?? '3600', 10),
   });
 };
 
@@ -42,9 +46,10 @@ export const prepareTokenToBeBlacklisted = (token, expirationTime) => {
 
 export const jwtValidator = async (token) => {
   try {
-    const decodedToken: any = await verify(token, secret);
+    const decodedToken: any = verify(token, secret);
     return decodedToken;
   } catch (error) {
+    console.log('JWT Validation Error:', error);
     return false;
   }
 };

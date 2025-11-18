@@ -5,11 +5,13 @@ import {
   Conversation,
   conversationSchema,
 } from 'src/conversation/schemas/converstaion.schema';
+import { Message, messageSchema } from '../message/schemas/mesaage.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Conversation.name, schema: conversationSchema },
+      { name: Message.name, schema: messageSchema },
     ]),
   ],
   providers: [EventsGateway],

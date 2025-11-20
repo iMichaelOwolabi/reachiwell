@@ -7,13 +7,13 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-// import { User } from '../user/schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Conversation } from '../conversation/schemas/converstaion.schema';
 import { Message } from '../message/schemas/mesaage.schema';
 import { jwtValidator } from 'src/user/utils/auth.utils';
 import { MessageInterface } from '../message/interface/message.interface';
+import { generateAiResponse } from '../thirdparty/openaiModel';
 
 @WebSocketGateway({})
 export class EventsGateway implements OnGatewayConnection {
@@ -36,16 +36,9 @@ export class EventsGateway implements OnGatewayConnection {
       roomName: client.handshake.headers['room-name'],
     });
 
-    // const roomName = client.handshake.headers['room-name'] || 'yes yes';
-
     //Create the room
     console.log(client.id, 'CLIENT ID');
     this.createroom(client.handshake.headers['room-name'], client.id);
-
-    // this.getNumberOfRoomName();
-    // console.log(room, 'roomName');
-
-    // this.handleJoinRoom();
   }
 
   // Listen for messages from clients
@@ -69,7 +62,8 @@ export class EventsGateway implements OnGatewayConnection {
     }
 
     //Make to to the AI model (OpenAI) at this point to analyse the user's message and respond accordingly
-
+    await generateAiResponse(data);
+    console.log('Received message:', typeof data);
     await this.saveMessage({
       conversationId: conversation.id,
       senderId: decodedToken.userId,

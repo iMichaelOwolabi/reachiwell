@@ -12,9 +12,6 @@ export class Message {
   senderId: string;
 
   @Prop({ required: true })
-  recipientId: string;
-
-  @Prop({ required: true })
   message: string;
 }
 

@@ -14,6 +14,8 @@ import { Message } from '../message/schemas/mesaage.schema';
 import { jwtValidator } from 'src/user/utils/auth.utils';
 import { MessageInterface } from '../message/interface/message.interface';
 import { generateAiResponse } from '../thirdparty/openaiModel';
+import { triageResponse } from 'src/utils/helpers';
+import { AiReponseInterface } from 'src/utils/utils.interface';
 
 @WebSocketGateway({})
 export class EventsGateway implements OnGatewayConnection {
@@ -61,22 +63,47 @@ export class EventsGateway implements OnGatewayConnection {
       });
     }
 
-    //Make to to the AI model (OpenAI) at this point to analyse the user's message and respond accordingly
-    await generateAiResponse(data);
-    console.log('Received message:', typeof data);
+    // Save the nessage using the conversation ID for reference
     await this.saveMessage({
       conversationId: conversation.id,
       senderId: decodedToken.userId,
-      recipientId: '64b8f3f4f1d2c4a5b6c7d8e1',
       message: data,
     });
 
-    this.server
-      .in(conversation.roomName)
-      .emit('message', this.generateRandomMessage());
+    //Make call to the AI model (OpenAI) at this point to analyse the user's message and respond accordingly
+    const aiResponse: any = await generateAiResponse(data);
+    console.log('Received message:', typeof data);
+
+    // Save AI response as a message for reference
+    await this.saveMessage({
+      conversationId: conversation.id,
+      senderId: 'AI Model',
+      message: JSON.stringify(aiResponse),
+    });
+
+    const formattedResponse = JSON.parse(aiResponse);
+
+    const responseToUser = triageResponse(formattedResponse?.category);
+
+    // Emit the AI response back to the client in the same room
+    this.server.in(conversation.roomName).emit('message', responseToUser);
   }
 
-  async saveMessage(messageData: MessageInterface) {
+  @SubscribeMessage('escalate')
+  async handleEscalation(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    // const decodedToken = await jwtValidator(client.handshake.headers['auth']);
+    // let conversation = await this.getConversationByRoomName(
+    //   client.handshake.headers['room-name'],
+    // );
+    // // Notify the admin team about the escalation here via email
+    // // Emit the AI response back to the client in the same room
+    // this.server.in(conversation.roomName).emit('message', aiResponse);
+  }
+
+  private async saveMessage(messageData: MessageInterface) {
     return await this.messageModel.create(messageData);
   }
 

@@ -85,6 +85,12 @@ export class EventsGateway implements OnGatewayConnection {
 
     const responseToUser = triageResponse(formattedResponse?.category);
 
+    await this.saveMessage({
+      conversationId: conversation.id,
+      senderId: 'The System',
+      message: responseToUser,
+    });
+
     // Emit the AI response back to the client in the same room
     this.server.in(conversation.roomName).emit('message', responseToUser);
   }
